@@ -45,14 +45,21 @@ const InteractionButtons = ({ lesson }) => {
   };
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const facebookShareUrl = "https://www.facebook.com/sharer/sharer.php?u=" + shareUrl;
+  const twitterShareUrl =
+    "https://twitter.com/intent/tweet?url=" + shareUrl + "&text=" + lesson.title;
+  const linkedinShareUrl = "https://www.linkedin.com/sharing/share-offsite/?url=" + shareUrl;
+
+  const likeBtnClass = liked ? "btn btn-secondary" : "btn btn-outline btn-secondary";
+  const saveBtnClass = saved ? "btn btn-primary" : "btn btn-outline btn-primary";
 
   return (
     <div className="flex flex-wrap gap-3 my-6">
-      <button onClick={handleLike} className={`btn ${liked ? "btn-secondary" : "btn-outline btn-secondary"}`}>
+      <button onClick={handleLike} className={likeBtnClass}>
         <FaHeart /> {liked ? "Liked" : "Like"}
       </button>
 
-      <button onClick={handleSave} className={`btn ${saved ? "btn-primary" : "btn-outline btn-primary"}`}>
+      <button onClick={handleSave} className={saveBtnClass}>
         <FaBookmark /> {saved ? "Saved" : "Save to Favorites"}
       </button>
 
@@ -63,28 +70,13 @@ const InteractionButtons = ({ lesson }) => {
         <FaFlag /> Report
       </button>
 
-      
-        href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
-        target="_blank"
-        rel="noreferrer"
-        className="btn btn-circle btn-outline"
-      >
+      <a href={facebookShareUrl} target="_blank" rel="noreferrer" className="btn btn-circle btn-outline">
         <FaFacebook />
       </a>
-      
-        href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${lesson.title}`}
-        target="_blank"
-        rel="noreferrer"
-        className="btn btn-circle btn-outline"
-      >
+      <a href={twitterShareUrl} target="_blank" rel="noreferrer" className="btn btn-circle btn-outline">
         <FaXTwitter />
       </a>
-      
-        href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
-        target="_blank"
-        rel="noreferrer"
-        className="btn btn-circle btn-outline"
-      >
+      <a href={linkedinShareUrl} target="_blank" rel="noreferrer" className="btn btn-circle btn-outline">
         <FaLinkedin />
       </a>
 
