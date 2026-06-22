@@ -4,6 +4,7 @@ import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { AuthProvider } from "@/lib/AuthProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -18,18 +19,19 @@ const inter = Inter({
 
 export const metadata = {
   title: "Digital Life Lessons",
-  description:
-    "Create, store and share meaningful life lessons and wisdom you've gathered over time.",
+  description: "Create, store and share meaningful life lessons and wisdom you have gathered over time.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="lifelessons">
       <body className={`${poppins.variable} ${inter.variable} antialiased`}>
-        <Navbar />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-        <ToastContainer position="top-center" autoClose={3000} />
+        <AuthProvider>
+          <Navbar />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <ToastContainer position="top-center" autoClose={3000} />
+        </AuthProvider>
       </body>
     </html>
   );
