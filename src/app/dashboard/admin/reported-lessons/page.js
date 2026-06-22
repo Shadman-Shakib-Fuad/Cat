@@ -1,47 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-
-const initialReports = [
-  {
-    id: "r1",
-    lessonId: "2",
-    lessonTitle: "Letting Go of People Who Drain You",
-    reportCount: 3,
-    reports: [
-      { reporter: "user1@example.com", reason: "Spam or misleading", timestamp: "2025-06-10" },
-      { reporter: "user2@example.com", reason: "False information", timestamp: "2025-06-11" },
-      { reporter: "user3@example.com", reason: "Inappropriate content", timestamp: "2025-06-12" },
-    ],
-  },
-  {
-    id: "r2",
-    lessonId: "5",
-    lessonTitle: "The Job I Didn't Get Saved My Career",
-    reportCount: 1,
-    reports: [
-      { reporter: "user4@example.com", reason: "Hate speech", timestamp: "2025-06-15" },
-    ],
-  },
-];
+import { apiFetch } from "@/lib/api";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 const ReportedLessonsPage = () => {
-  const [reports, setReports] = useState(initialReports);
-  const [selectedReport, setSelectedReport] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedLesson, setSelectedLesson] = useState(null);
 
-  const handleDelete = (id) => {
+  useEffect(() => {
+    apiFetch("/api/reports")
+      .then((data) => {
+        const grouped = {};
+        data.forEach((r) => {
+          const id = r.lessonId?._id;
+          if (!id) return;
+          if (!grouped[id]) {
+            grouped[id] = {
+              lessonId: id,
+              lessonTitle: r.lessonId?.title,
+              reports: [],
+            };
+          }
+          grouped[id].reports.push(r);
+        });
+        setReports(Object.values(grouped));
+      })
+      .catch(() => toast.error("Failed to load reports"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDelete = async (lessonId) => {
     if (!confirm("Permanently delete this lesson?")) return;
-    setReports((prev) => prev.filter((r) => r.id !== id));
-    toast.success("Lesson deleted and reports cleared");
-    setSelectedReport(null);
+    try {
+      await apiFetch(`/api/lessons/${lessonId}`, { method: "DELETE" });
+      await apiFetch(`/api/reports/${lessonId}/ignore`, { method: "DELETE" });
+      setReports((prev) => prev.filter((r) => r.lessonId !== lessonId));
+      setSelectedLesson(null);
+      toast.success("Lesson deleted and reports cleared");
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
-  const handleIgnore = (id) => {
-    setReports((prev) => prev.filter((r) => r.id !== id));
-    toast.success("Reports ignored — lesson kept live");
-    setSelectedReport(null);
+  const handleIgnore = async (lessonId) => {
+    try {
+      await apiFetch(`/api/reports/${lessonId}/ignore`, { method: "DELETE" });
+      setReports((prev) => prev.filter((r) => r.lessonId !== lessonId));
+      setSelectedLesson(null);
+      toast.success("Reports ignored — lesson kept live");
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div>
@@ -64,31 +79,14 @@ const ReportedLessonsPage = () => {
             </thead>
             <tbody>
               {reports.map((r) => (
-                <tr key={r.id} className="border-t border-base-300">
+                <tr key={r.lessonId} className="border-t border-base-300">
                   <td className="font-medium">{r.lessonTitle}</td>
-                  <td>
-                    <span className="badge badge-error badge-sm">{r.reportCount} reports</span>
-                  </td>
+                  <td><span className="badge badge-error badge-sm">{r.reports.length} reports</span></td>
                   <td>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => setSelectedReport(r)}
-                        className="btn btn-xs btn-outline"
-                      >
-                        View Reasons
-                      </button>
-                      <button
-                        onClick={() => handleIgnore(r.id)}
-                        className="btn btn-xs btn-outline btn-warning"
-                      >
-                        Ignore
-                      </button>
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="btn btn-xs btn-outline btn-error"
-                      >
-                        Delete Lesson
-                      </button>
+                      <button onClick={() => setSelectedLesson(r)} className="btn btn-xs btn-outline">View Reasons</button>
+                      <button onClick={() => handleIgnore(r.lessonId)} className="btn btn-xs btn-outline btn-warning">Ignore</button>
+                      <button onClick={() => handleDelete(r.lessonId)} className="btn btn-xs btn-outline btn-error">Delete Lesson</button>
                     </div>
                   </td>
                 </tr>
@@ -98,24 +96,24 @@ const ReportedLessonsPage = () => {
         </div>
       )}
 
-      {selectedReport && (
+      {selectedLesson && (
         <dialog open className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{selectedReport.lessonTitle} — Reports</h3>
+            <h3 className="font-bold text-lg mb-4">{selectedLesson.lessonTitle} — Reports</h3>
             <div className="space-y-3">
-              {selectedReport.reports.map((rep, idx) => (
+              {selectedLesson.reports.map((rep, idx) => (
                 <div key={idx} className="bg-base-200 rounded-xl p-3 text-sm">
-                  <p className="font-semibold">{rep.reporter}</p>
+                  <p className="font-semibold">{rep.reporterUserId?.name || rep.reportedUserEmail}</p>
                   <p className="text-base-content/70">{rep.reason}</p>
-                  <p className="text-xs text-base-content/50 mt-1">{rep.timestamp}</p>
+                  <p className="text-xs text-base-content/50 mt-1">{new Date(rep.createdAt).toLocaleDateString()}</p>
                 </div>
               ))}
             </div>
             <div className="modal-action">
-              <button onClick={() => setSelectedReport(null)} className="btn">Close</button>
+              <button onClick={() => setSelectedLesson(null)} className="btn">Close</button>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setSelectedReport(null)} />
+          <div className="modal-backdrop" onClick={() => setSelectedLesson(null)} />
         </dialog>
       )}
     </div>
