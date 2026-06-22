@@ -2,29 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { signUp, signIn } from "@/lib/auth-client";
 
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const validatePassword = (password) => {
-    if (password.length < 6) {
-      return "Password must be at least 6 characters long";
-    }
-    if (!/[A-Z]/.test(password)) {
-      return "Password must contain an uppercase letter";
-    }
-    if (!/[a-z]/.test(password)) {
-      return "Password must contain a lowercase letter";
-    }
+    if (password.length < 6) return "Password must be at least 6 characters long";
+    if (!/[A-Z]/.test(password)) return "Password must contain an uppercase letter";
+    if (!/[a-z]/.test(password)) return "Password must contain a lowercase letter";
     return null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const form = e.target;
     const name = form.name.value.trim();
     const email = form.email.value.trim();
@@ -35,7 +31,6 @@ const RegisterForm = () => {
       toast.error("Please fill in all required fields");
       return;
     }
-
     const passwordError = validatePassword(password);
     if (passwordError) {
       toast.error(passwordError);
@@ -43,25 +38,37 @@ const RegisterForm = () => {
     }
 
     setLoading(true);
-  
-    setTimeout(() => {
+    const { error } = await signUp.email({
+      name,
+      email,
+      password,
+      image: photoURL,
+    });
+
+    if (error) {
+      toast.error(error.message || "Registration failed");
       setLoading(false);
-      toast.success("Account created! (UI only — auth not connected yet)");
-    }, 800);
+      return;
+    }
+
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, photoURL }),
+    });
+
+    toast.success("Account created successfully!");
+    router.push("/dashboard");
+    setLoading(false);
   };
 
-  const handleGoogleLogin = () => {
-   
-    toast.info("Google login will be connected soon");
+  const handleGoogleLogin = async () => {
+    await signIn.social({ provider: "google", callbackURL: "/dashboard" });
   };
 
   return (
     <div>
-      <button
-        onClick={handleGoogleLogin}
-        className="btn btn-outline w-full mb-6"
-        type="button"
-      >
+      <button onClick={handleGoogleLogin} className="btn btn-outline w-full mb-6" type="button">
         <FaGoogle className="text-secondary" /> Continue with Google
       </button>
 
@@ -69,47 +76,22 @@ const RegisterForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="form-control">
-          <label className="label">
-            <span className="label-text font-medium">Full Name</span>
-          </label>
-          <input
-            type="text"
-            name="name"
-            placeholder="John Doe"
-            className="input input-bordered w-full"
-            required
-          />
+          <label className="label"><span className="label-text font-medium">Full Name</span></label>
+          <input type="text" name="name" placeholder="John Doe" className="input input-bordered w-full" required />
         </div>
 
         <div className="form-control">
-          <label className="label">
-            <span className="label-text font-medium">Email</span>
-          </label>
-          <input
-            type="email"
-            name="email"
-            placeholder="you@example.com"
-            className="input input-bordered w-full"
-            required
-          />
+          <label className="label"><span className="label-text font-medium">Email</span></label>
+          <input type="email" name="email" placeholder="you@example.com" className="input input-bordered w-full" required />
         </div>
 
         <div className="form-control">
-          <label className="label">
-            <span className="label-text font-medium">Photo URL</span>
-          </label>
-          <input
-            type="text"
-            name="photoURL"
-            placeholder="https://your-photo-link.com"
-            className="input input-bordered w-full"
-          />
+          <label className="label"><span className="label-text font-medium">Photo URL</span></label>
+          <input type="text" name="photoURL" placeholder="https://your-photo-link.com" className="input input-bordered w-full" />
         </div>
 
         <div className="form-control">
-          <label className="label">
-            <span className="label-text font-medium">Password</span>
-          </label>
+          <label className="label"><span className="label-text font-medium">Password</span></label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -127,9 +109,7 @@ const RegisterForm = () => {
             </button>
           </div>
           <label className="label">
-            <span className="label-text-alt text-base-content/50">
-              Must include uppercase, lowercase & be 6+ characters
-            </span>
+            <span className="label-text-alt text-base-content/50">Must include uppercase, lowercase & be 6+ characters</span>
           </label>
         </div>
 
@@ -140,9 +120,7 @@ const RegisterForm = () => {
 
       <p className="text-center text-sm mt-6 text-base-content/70">
         Already have an account?{" "}
-        <Link href="/login" className="text-primary font-semibold">
-          Login
-        </Link>
+        <Link href="/login" className="text-primary font-semibold">Login</Link>
       </p>
     </div>
   );
