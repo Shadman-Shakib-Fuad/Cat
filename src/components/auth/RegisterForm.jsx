@@ -43,7 +43,7 @@ const RegisterForm = () => {
     }
 
     setLoading(true);
-    // TODO: Better Auth দিয়ে real registration বসবে এখানে
+  
     setTimeout(() => {
       setLoading(false);
       toast.success("Account created! (UI only — auth not connected yet)");
@@ -51,7 +51,7 @@ const RegisterForm = () => {
   };
 
   const handleGoogleLogin = () => {
-    // TODO: Better Auth Google provider বসবে এখানে
+   
     toast.info("Google login will be connected soon");
   };
 

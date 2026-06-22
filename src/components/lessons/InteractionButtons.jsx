@@ -14,7 +14,7 @@ const reportReasons = [
 ];
 
 const InteractionButtons = ({ lesson }) => {
-  // TODO: পরে Better Auth দিয়ে real user বসবে
+
   const user = null;
 
   const [liked, setLiked] = useState(false);
@@ -39,7 +39,7 @@ const InteractionButtons = ({ lesson }) => {
   };
 
   const handleReportSubmit = () => {
-    // TODO: পরে lessonsReports collection এ POST করব
+   
     toast.success("Lesson reported. Our team will review it.");
     document.getElementById("report_modal").close();
   };

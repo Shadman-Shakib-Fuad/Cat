@@ -22,7 +22,7 @@ const LoginForm = () => {
     }
 
     setLoading(true);
-    // TODO: Better Auth দিয়ে real login বসবে এখানে
+
     setTimeout(() => {
       setLoading(false);
       toast.success("Logged in! (UI only — auth not connected yet)");
@@ -30,7 +30,7 @@ const LoginForm = () => {
   };
 
   const handleGoogleLogin = () => {
-    // TODO: Better Auth Google provider বসবে এখানে
+    
     toast.info("Google login will be connected soon");
   };
 

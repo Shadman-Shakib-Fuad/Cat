@@ -4,7 +4,7 @@ import { FaBookOpen } from "react-icons/fa";
 const AuthLayout = ({ title, subtitle, children }) => {
   return (
     <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2">
-      {/* Left branding panel */}
+      {}
       <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary via-secondary to-accent text-white p-12">
         <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold">
           <FaBookOpen />
@@ -28,7 +28,7 @@ const AuthLayout = ({ title, subtitle, children }) => {
         </p>
       </div>
 
-      {/* Right form panel */}
+      {}
       <div className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md">
           <h1 className="text-2xl sm:text-3xl font-extrabold mb-2">{title}</h1>

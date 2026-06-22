@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 
 const CommentSection = ({ comments = [] }) => {
   const [text, setText] = useState("");
-  const user = null; // TODO: Better Auth বসার পর real user
+  const user = null; 
 
   const handleSubmit = (e) => {
     e.preventDefault();

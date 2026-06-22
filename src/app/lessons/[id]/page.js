@@ -13,7 +13,6 @@ const LessonDetailsPage = ({ params }) => {
 
   if (!lesson) notFound();
 
-  // TODO: পরে real auth বসলে premium-lock check এখানে হবে
   const comments = sampleComments[lesson.id] || [];
 
   return (
