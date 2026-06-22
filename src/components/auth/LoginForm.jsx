@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { signIn } from "@/lib/auth-client";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const form = e.target;
     const email = form.email.value.trim();
     const password = form.password.value;
@@ -22,25 +24,30 @@ const LoginForm = () => {
     }
 
     setLoading(true);
+    const { error } = await signIn.email({
+      email,
+      password,
+      callbackURL: "/dashboard",
+    });
 
-    setTimeout(() => {
+    if (error) {
+      toast.error(error.message || "Login failed");
       setLoading(false);
-      toast.success("Logged in! (UI only — auth not connected yet)");
-    }, 800);
+      return;
+    }
+
+    toast.success("Logged in successfully!");
+    router.push("/dashboard");
+    setLoading(false);
   };
 
-  const handleGoogleLogin = () => {
-    
-    toast.info("Google login will be connected soon");
+  const handleGoogleLogin = async () => {
+    await signIn.social({ provider: "google", callbackURL: "/dashboard" });
   };
 
   return (
     <div>
-      <button
-        onClick={handleGoogleLogin}
-        className="btn btn-outline w-full mb-6"
-        type="button"
-      >
+      <button onClick={handleGoogleLogin} className="btn btn-outline w-full mb-6" type="button">
         <FaGoogle className="text-secondary" /> Continue with Google
       </button>
 
@@ -48,22 +55,12 @@ const LoginForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="form-control">
-          <label className="label">
-            <span className="label-text font-medium">Email</span>
-          </label>
-          <input
-            type="email"
-            name="email"
-            placeholder="you@example.com"
-            className="input input-bordered w-full"
-            required
-          />
+          <label className="label"><span className="label-text font-medium">Email</span></label>
+          <input type="email" name="email" placeholder="you@example.com" className="input input-bordered w-full" required />
         </div>
 
         <div className="form-control">
-          <label className="label">
-            <span className="label-text font-medium">Password</span>
-          </label>
+          <label className="label"><span className="label-text font-medium">Password</span></label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -89,9 +86,7 @@ const LoginForm = () => {
 
       <p className="text-center text-sm mt-6 text-base-content/70">
         Don't have an account?{" "}
-        <Link href="/register" className="text-primary font-semibold">
-          Register
-        </Link>
+        <Link href="/register" className="text-primary font-semibold">Register</Link>
       </p>
     </div>
   );
