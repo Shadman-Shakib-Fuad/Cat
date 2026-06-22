@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { signIn } from "@/lib/auth-client";
+import { loginUser } from "@/lib/auth-client";
+import { useAuth } from "@/lib/AuthProvider";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { updateUser } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,30 +26,21 @@ const LoginForm = () => {
     }
 
     setLoading(true);
-    const { error } = await signIn.email({
-      email,
-      password,
-      callbackURL: "/dashboard",
-    });
-
-    if (error) {
-      toast.error(error.message || "Login failed");
+    try {
+      const data = await loginUser({ email, password });
+      updateUser(data.user);
+      toast.success("Logged in successfully!");
+      router.push("/dashboard");
+    } catch (err) {
+      toast.error(err.message || "Login failed");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    toast.success("Logged in successfully!");
-    router.push("/dashboard");
-    setLoading(false);
-  };
-
-  const handleGoogleLogin = async () => {
-    await signIn.social({ provider: "google", callbackURL: "/dashboard" });
   };
 
   return (
     <div>
-      <button onClick={handleGoogleLogin} className="btn btn-outline w-full mb-6" type="button">
+      <button className="btn btn-outline w-full mb-6" type="button" onClick={() => toast.info("Google login coming soon")}>
         <FaGoogle className="text-secondary" /> Continue with Google
       </button>
 
@@ -69,11 +62,7 @@ const LoginForm = () => {
               className="input input-bordered w-full pr-12"
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/50"
-            >
+            <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/50">
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>

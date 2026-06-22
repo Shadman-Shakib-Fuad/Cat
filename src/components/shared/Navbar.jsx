@@ -5,17 +5,16 @@ import { useState } from "react";
 import { FaBookOpen, FaBars } from "react-icons/fa";
 import { FaStar } from "react-icons/fa6";
 import { useAuth } from "@/lib/AuthProvider";
-import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, isPremium } = useAuth();
+  const { user, isPremium, logout } = useAuth();
   const router = useRouter();
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleLogout = () => {
+    logout();
     toast.success("Logged out successfully");
     router.push("/");
   };
@@ -40,18 +39,11 @@ const Navbar = () => {
     <div className="navbar bg-base-100 shadow-sm sticky top-0 z-50 px-4 sm:px-6 lg:px-8">
       <div className="navbar-start">
         <div className="dropdown">
-          <button
-            tabIndex={0}
-            onClick={() => setIsOpen(!isOpen)}
-            className="btn btn-ghost lg:hidden"
-          >
+          <button tabIndex={0} onClick={() => setIsOpen(!isOpen)} className="btn btn-ghost lg:hidden">
             <FaBars size={20} />
           </button>
           {isOpen && (
-            <ul
-              tabIndex={0}
-              className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-56"
-            >
+            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-56">
               {navLinks}
             </ul>
           )}
@@ -63,9 +55,7 @@ const Navbar = () => {
       </div>
 
       <div className="navbar-center hidden lg:flex">
-        <ul className="menu menu-horizontal px-1 gap-1 font-medium">
-          {navLinks}
-        </ul>
+        <ul className="menu menu-horizontal px-1 gap-1 font-medium">{navLinks}</ul>
       </div>
 
       <div className="navbar-end gap-2">
@@ -78,16 +68,10 @@ const Navbar = () => {
           <div className="dropdown dropdown-end">
             <button tabIndex={0} className="btn btn-ghost btn-circle avatar">
               <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img
-                  src={user?.image || "https://i.pravatar.cc/150?img=12"}
-                  alt="avatar"
-                />
+                <img src={user?.photoURL || "https://i.pravatar.cc/150?img=12"} alt="avatar" />
               </div>
             </button>
-            <ul
-              tabIndex={0}
-              className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
-            >
+            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
               <li className="px-3 py-1 font-semibold flex items-center gap-2">
                 {user?.name}
                 {isPremium && <FaStar className="text-warning" size={12} />}

@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { signUp, signIn } from "@/lib/auth-client";
+import { registerUser } from "@/lib/auth-client";
+import { useAuth } from "@/lib/AuthProvider";
 
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { updateUser } = useAuth();
 
   const validatePassword = (password) => {
     if (password.length < 6) return "Password must be at least 6 characters long";
@@ -38,37 +40,21 @@ const RegisterForm = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp.email({
-      name,
-      email,
-      password,
-      image: photoURL,
-    });
-
-    if (error) {
-      toast.error(error.message || "Registration failed");
+    try {
+      const data = await registerUser({ name, email, password, photoURL });
+      updateUser(data.user);
+      toast.success("Account created successfully!");
+      router.push("/dashboard");
+    } catch (err) {
+      toast.error(err.message || "Registration failed");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, photoURL }),
-    });
-
-    toast.success("Account created successfully!");
-    router.push("/dashboard");
-    setLoading(false);
-  };
-
-  const handleGoogleLogin = async () => {
-    await signIn.social({ provider: "google", callbackURL: "/dashboard" });
   };
 
   return (
     <div>
-      <button onClick={handleGoogleLogin} className="btn btn-outline w-full mb-6" type="button">
+      <button className="btn btn-outline w-full mb-6" type="button" onClick={() => toast.info("Google login coming soon")}>
         <FaGoogle className="text-secondary" /> Continue with Google
       </button>
 
@@ -100,16 +86,12 @@ const RegisterForm = () => {
               className="input input-bordered w-full pr-12"
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/50"
-            >
+            <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/50">
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
           <label className="label">
-            <span className="label-text-alt text-base-content/50">Must include uppercase, lowercase & be 6+ characters</span>
+            <span className="label-text-alt text-base-content/50">Must include uppercase, lowercase & 6+ characters</span>
           </label>
         </div>
 
