@@ -3,32 +3,30 @@ import { FaLock, FaHeart, FaBookmark } from "react-icons/fa";
 
 const LessonCard = ({ lesson, isUserPremium = false }) => {
   const isLocked = lesson.accessLevel === "Premium" && !isUserPremium;
+  const id = lesson._id || lesson.id;
+  const creator = lesson.creatorId || lesson.creator;
 
   return (
-    <div className="card bg-base-100 shadow-md hover:shadow-xl transition-shadow duration-300 border border-base-300">
+    <div className="card bg-base-100 shadow-md hover:shadow-xl transition-shadow duration-300 border border-base-300 h-full">
       <figure className="relative h-48">
         <img
-          src={lesson.image}
+          src={lesson.image || "https://picsum.photos/seed/default/600/400"}
           alt={lesson.title}
           className={`w-full h-full object-cover ${isLocked ? "blur-md scale-105" : ""}`}
         />
         {isLocked && (
           <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white gap-2 px-4 text-center">
             <FaLock size={24} />
-            <p className="font-semibold text-sm">Premium Lesson – Upgrade to view</p>
+            <p className="font-semibold text-sm">Premium Lesson — Upgrade to view</p>
           </div>
         )}
-        <div
-          className={`badge absolute top-3 right-3 font-semibold ${
-            lesson.accessLevel === "Premium" ? "badge-secondary" : "badge-accent"
-          }`}
-        >
+        <div className={`badge absolute top-3 right-3 font-semibold ${lesson.accessLevel === "Premium" ? "badge-secondary" : "badge-accent"}`}>
           {lesson.accessLevel}
         </div>
       </figure>
 
       <div className="card-body">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <span className="badge badge-outline badge-primary">{lesson.category}</span>
           <span className="badge badge-outline">{lesson.emotionalTone}</span>
         </div>
@@ -38,26 +36,28 @@ const LessonCard = ({ lesson, isUserPremium = false }) => {
 
         <div className="flex items-center gap-2 mt-3">
           <img
-            src={lesson.creator.photo}
-            alt={lesson.creator.name}
+            src={creator?.photoURL || creator?.photo || "https://i.pravatar.cc/150?img=12"}
+            alt={creator?.name}
             className="w-7 h-7 rounded-full"
           />
-          <span className="text-sm font-medium">{lesson.creator.name}</span>
-          <span className="text-xs text-base-content/50 ml-auto">{lesson.createdAt}</span>
+          <span className="text-sm font-medium">{creator?.name}</span>
+          <span className="text-xs text-base-content/50 ml-auto">
+            {lesson.createdAt ? new Date(lesson.createdAt).toLocaleDateString() : lesson.createdAt}
+          </span>
         </div>
 
         <div className="flex items-center gap-4 text-sm text-base-content/60 mt-2">
           <span className="flex items-center gap-1">
-            <FaHeart className="text-secondary" /> {lesson.likesCount}
+            <FaHeart className="text-secondary" /> {lesson.likesCount || 0}
           </span>
           <span className="flex items-center gap-1">
-            <FaBookmark className="text-primary" /> {lesson.favoritesCount}
+            <FaBookmark className="text-primary" /> {lesson.favoritesCount || 0}
           </span>
         </div>
 
         <div className="card-actions mt-3">
           <Link
-            href={isLocked ? "/dashboard/pricing" : `/lessons/${lesson.id}`}
+            href={isLocked ? "/dashboard/pricing" : `/lessons/${id}`}
             className="btn btn-primary btn-sm w-full"
           >
             {isLocked ? "Upgrade to View" : "See Details"}
