@@ -1,11 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { sampleLessons } from "@/lib/mockData";
 import LessonCard from "@/components/shared/LessonCard";
+import { apiFetch } from "@/lib/api";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 const FeaturedLessons = () => {
-  const featured = sampleLessons.filter((lesson) => lesson.isFeatured);
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch("/api/lessons/featured")
+      .then(setLessons)
+      .catch(() => setLessons([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
+  if (lessons.length === 0) return null;
 
   return (
     <section className="bg-base-200 py-16">
@@ -15,14 +28,13 @@ const FeaturedLessons = () => {
             Featured <span className="text-secondary">Life Lessons</span>
           </h2>
           <p className="text-base-content/70 max-w-xl mx-auto">
-            Hand-picked lessons our team thinks you shouldn't miss.
+            Hand-picked lessons our team thinks you should not miss.
           </p>
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featured.map((lesson, idx) => (
+          {lessons.map((lesson, idx) => (
             <motion.div
-              key={lesson.id}
+              key={lesson._id}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}

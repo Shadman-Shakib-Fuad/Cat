@@ -1,10 +1,23 @@
-import { sampleLessons } from "@/lib/mockData";
+"use client";
+
+import { useEffect, useState } from "react";
 import LessonCard from "@/components/shared/LessonCard";
+import { apiFetch } from "@/lib/api";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 const MostSavedLessons = () => {
-  const mostSaved = [...sampleLessons]
-    .sort((a, b) => b.favoritesCount - a.favoritesCount)
-    .slice(0, 3);
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch("/api/lessons/most-saved")
+      .then(setLessons)
+      .catch(() => setLessons([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
+  if (lessons.length === 0) return null;
 
   return (
     <section className="bg-base-200 py-16">
@@ -14,13 +27,12 @@ const MostSavedLessons = () => {
             Most <span className="text-primary">Saved</span> Lessons
           </h2>
           <p className="text-base-content/70 max-w-xl mx-auto">
-            The lessons people bookmark the most — clearly resonating with readers.
+            The lessons people bookmark the most.
           </p>
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mostSaved.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} />
+          {lessons.map((lesson) => (
+            <LessonCard key={lesson._id} lesson={lesson} />
           ))}
         </div>
       </div>
