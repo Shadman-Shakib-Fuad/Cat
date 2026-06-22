@@ -1,50 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { sampleLessons, CATEGORIES } from "@/lib/mockData";
+import { apiFetch } from "@/lib/api";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { CATEGORIES } from "@/lib/mockData";
 import { FaStar, FaTrash, FaCheck } from "react-icons/fa";
 
 const ManageLessonsPage = () => {
-  const [lessons, setLessons] = useState(sampleLessons);
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState("All");
   const [filterVisibility, setFilterVisibility] = useState("All");
 
-  const handleDelete = (id) => {
+  useEffect(() => {
+    apiFetch("/api/lessons/admin/all")
+      .then(setLessons)
+      .catch(() => toast.error("Failed to load lessons"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDelete = async (id) => {
     if (!confirm("Permanently delete this lesson?")) return;
-    setLessons((prev) => prev.filter((l) => l.id !== id));
-    toast.success("Lesson deleted");
+    try {
+      await apiFetch(`/api/lessons/${id}`, { method: "DELETE" });
+      setLessons((prev) => prev.filter((l) => l._id !== id));
+      toast.success("Lesson deleted");
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
-  const handleFeatureToggle = (id) => {
-    setLessons((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, isFeatured: !l.isFeatured } : l))
-    );
-    toast.success("Featured status updated");
-  };
-
-  const handleReviewToggle = (id) => {
-    setLessons((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, isReviewed: !l.isReviewed } : l))
-    );
-    toast.success("Review status updated");
+  const handleToggle = async (lesson, field) => {
+    try {
+      const updated = await apiFetch(`/api/lessons/${lesson._id}/admin`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: !lesson[field] }),
+      });
+      setLessons((prev) => prev.map((l) => l._id === lesson._id ? { ...l, [field]: updated[field] } : l));
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   const filtered = lessons
     .filter((l) => filterCategory === "All" || l.category === filterCategory)
     .filter((l) => filterVisibility === "All" || l.visibility === filterVisibility);
 
-  const publicCount = lessons.filter((l) => l.visibility === "Public").length;
-  const privateCount = lessons.filter((l) => l.visibility === "Private").length;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div>
       <h1 className="text-2xl font-extrabold mb-2">Manage Lessons</h1>
-      <p className="text-base-content/60 text-sm mb-6">Review, feature, or remove lessons from the platform.</p>
+      <p className="text-base-content/60 text-sm mb-6">Review, feature, or remove lessons.</p>
 
       <div className="flex gap-4 mb-6">
-        <div className="badge badge-success badge-lg">Public: {publicCount}</div>
-        <div className="badge badge-ghost badge-lg">Private: {privateCount}</div>
+        <div className="badge badge-success badge-lg">Public: {lessons.filter((l) => l.visibility === "Public").length}</div>
+        <div className="badge badge-ghost badge-lg">Private: {lessons.filter((l) => l.visibility === "Private").length}</div>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
@@ -74,36 +86,23 @@ const ManageLessonsPage = () => {
           </thead>
           <tbody>
             {filtered.map((lesson) => (
-              <tr key={lesson.id} className="border-t border-base-300">
+              <tr key={lesson._id} className="border-t border-base-300">
                 <td className="font-medium max-w-[160px] truncate">{lesson.title}</td>
-                <td className="text-sm">{lesson.creator.name}</td>
+                <td className="text-sm">{lesson.creatorId?.name || "Unknown"}</td>
                 <td><span className="badge badge-outline badge-primary badge-sm">{lesson.category}</span></td>
+                <td><span className={`badge badge-sm ${lesson.visibility === "Public" ? "badge-success" : "badge-ghost"}`}>{lesson.visibility}</span></td>
                 <td>
-                  <span className={`badge badge-sm ${lesson.visibility === "Public" ? "badge-success" : "badge-ghost"}`}>
-                    {lesson.visibility}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    onClick={() => handleFeatureToggle(lesson.id)}
-                    className={`btn btn-xs ${lesson.isFeatured ? "btn-warning" : "btn-outline"}`}
-                  >
+                  <button onClick={() => handleToggle(lesson, "isFeatured")} className={`btn btn-xs ${lesson.isFeatured ? "btn-warning" : "btn-outline"}`}>
                     <FaStar /> {lesson.isFeatured ? "Featured" : "Feature"}
                   </button>
                 </td>
                 <td>
-                  <button
-                    onClick={() => handleReviewToggle(lesson.id)}
-                    className={`btn btn-xs ${lesson.isReviewed ? "btn-success" : "btn-outline"}`}
-                  >
+                  <button onClick={() => handleToggle(lesson, "isReviewed")} className={`btn btn-xs ${lesson.isReviewed ? "btn-success" : "btn-outline"}`}>
                     <FaCheck /> {lesson.isReviewed ? "Reviewed" : "Mark"}
                   </button>
                 </td>
                 <td>
-                  <button
-                    onClick={() => handleDelete(lesson.id)}
-                    className="btn btn-xs btn-outline btn-error"
-                  >
+                  <button onClick={() => handleDelete(lesson._id)} className="btn btn-xs btn-outline btn-error">
                     <FaTrash />
                   </button>
                 </td>
