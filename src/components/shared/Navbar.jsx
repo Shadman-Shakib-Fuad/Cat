@@ -6,32 +6,21 @@ import { FaBookOpen, FaBars } from "react-icons/fa";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-
   const user = null;
   const isPremium = false;
 
   const navLinks = (
     <>
-      <li>
-        <Link href="/">Home</Link>
-      </li>
-      <li>
-        <Link href="/public-lessons">Public Lessons</Link>
-      </li>
+      <li><Link href="/">Home</Link></li>
+      <li><Link href="/public-lessons">Public Lessons</Link></li>
       {user && (
         <>
-          <li>
-            <Link href="/dashboard/add-lesson">Add Lesson</Link>
-          </li>
-          <li>
-            <Link href="/dashboard/my-lessons">My Lessons</Link>
-          </li>
+          <li><Link href="/dashboard/add-lesson">Add Lesson</Link></li>
+          <li><Link href="/dashboard/my-lessons">My Lessons</Link></li>
         </>
       )}
       {user && !isPremium && (
-        <li>
-          <Link href="/dashboard/pricing">Pricing / Upgrade</Link>
-        </li>
+        <li><Link href="/dashboard/pricing">Pricing / Upgrade</Link></li>
       )}
     </>
   );
@@ -47,18 +36,18 @@ const Navbar = () => {
           >
             <FaBars size={20} />
           </button>
-          <ul
-            tabIndex={0}
-            className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-56"
-          >
-            {navLinks}
-          </ul>
+          {isOpen && (
+            <ul
+              tabIndex={0}
+              className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-56"
+            >
+              {navLinks}
+            </ul>
+          )}
         </div>
-        <Link href="/" className="btn btn-ghost text-xl font-extrabold">
+        <Link href="/" className="btn btn-ghost text-xl font-extrabold gap-1">
           <FaBookOpen className="text-primary" />
-          <span>
-            Digital<span className="text-primary">Lessons</span>
-          </span>
+          <span>Digital<span className="text-primary">Lessons</span></span>
         </Link>
       </div>
 
@@ -71,24 +60,14 @@ const Navbar = () => {
       <div className="navbar-end gap-2">
         {!user ? (
           <>
-            <Link href="/login" className="btn btn-ghost">
-              Login
-            </Link>
-            <Link href="/register" className="btn btn-primary">
-              Sign Up
-            </Link>
+            <Link href="/login" className="btn btn-ghost">Login</Link>
+            <Link href="/register" className="btn btn-primary">Sign Up</Link>
           </>
         ) : (
           <div className="dropdown dropdown-end">
             <button tabIndex={0} className="btn btn-ghost btn-circle avatar">
               <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img
-                  src={
-                    user?.photoURL ||
-                    "https://i.ibb.co/2kR4y9j/default-avatar.png"
-                  }
-                  alt="user avatar"
-                />
+                <img src={user?.photoURL || "https://i.pravatar.cc/150?img=12"} alt="avatar" />
               </div>
             </button>
             <ul
@@ -96,15 +75,9 @@ const Navbar = () => {
               className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
             >
               <li className="px-3 py-1 font-semibold">{user?.name}</li>
-              <li>
-                <Link href="/dashboard/profile">Profile</Link>
-              </li>
-              <li>
-                <Link href="/dashboard">Dashboard</Link>
-              </li>
-              <li>
-                <button>Logout</button>
-              </li>
+              <li><Link href="/dashboard/profile">Profile</Link></li>
+              <li><Link href="/dashboard">Dashboard</Link></li>
+              <li><button>Logout</button></li>
             </ul>
           </div>
         )}
