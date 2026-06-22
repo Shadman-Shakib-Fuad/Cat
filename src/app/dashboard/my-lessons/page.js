@@ -1,31 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "react-toastify";
-import { sampleLessons } from "@/lib/mockData";
+import { apiFetch } from "@/lib/api";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { FaHeart, FaBookmark, FaEdit, FaTrash } from "react-icons/fa";
 
 const MyLessonsPage = () => {
-  const [lessons, setLessons] = useState(
-    sampleLessons.filter((l) => l.creator.id === "u1")
-  );
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDelete = (id) => {
+  useEffect(() => {
+    apiFetch("/api/lessons/my-lessons")
+      .then(setLessons)
+      .catch(() => toast.error("Failed to load lessons"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this lesson?")) return;
-    setLessons((prev) => prev.filter((l) => l.id !== id));
-    toast.success("Lesson deleted");
+    try {
+      await apiFetch(`/api/lessons/${id}`, { method: "DELETE" });
+      setLessons((prev) => prev.filter((l) => l._id !== id));
+      toast.success("Lesson deleted");
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
-  const handleVisibilityToggle = (id) => {
-    setLessons((prev) =>
-      prev.map((l) =>
-        l.id === id
-          ? { ...l, visibility: l.visibility === "Public" ? "Private" : "Public" }
-          : l
-      )
-    );
+  const handleVisibilityToggle = async (lesson) => {
+    const newVisibility = lesson.visibility === "Public" ? "Private" : "Public";
+    try {
+      await apiFetch(`/api/lessons/${lesson._id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ visibility: newVisibility }),
+      });
+      setLessons((prev) =>
+        prev.map((l) => l._id === lesson._id ? { ...l, visibility: newVisibility } : l)
+      );
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div>
@@ -53,12 +72,12 @@ const MyLessonsPage = () => {
             </thead>
             <tbody>
               {lessons.map((lesson) => (
-                <tr key={lesson.id} className="border-t border-base-300">
+                <tr key={lesson._id} className="border-t border-base-300">
                   <td className="font-medium max-w-[180px] truncate">{lesson.title}</td>
                   <td><span className="badge badge-outline badge-primary badge-sm">{lesson.category}</span></td>
                   <td>
                     <button
-                      onClick={() => handleVisibilityToggle(lesson.id)}
+                      onClick={() => handleVisibilityToggle(lesson)}
                       className={`badge cursor-pointer ${lesson.visibility === "Public" ? "badge-success" : "badge-ghost"}`}
                     >
                       {lesson.visibility}
@@ -75,14 +94,16 @@ const MyLessonsPage = () => {
                       <span className="flex items-center gap-1"><FaBookmark className="text-primary" />{lesson.favoritesCount}</span>
                     </div>
                   </td>
-                  <td className="text-sm text-base-content/60">{lesson.createdAt}</td>
+                  <td className="text-sm text-base-content/60">
+                    {new Date(lesson.createdAt).toLocaleDateString()}
+                  </td>
                   <td>
                     <div className="flex gap-2">
-                      <Link href={`/lessons/${lesson.id}`} className="btn btn-xs btn-outline">View</Link>
-                      <Link href={`/dashboard/update-lesson/${lesson.id}`} className="btn btn-xs btn-outline btn-primary">
+                      <Link href={`/lessons/${lesson._id}`} className="btn btn-xs btn-outline">View</Link>
+                      <Link href={`/dashboard/update-lesson/${lesson._id}`} className="btn btn-xs btn-outline btn-primary">
                         <FaEdit />
                       </Link>
-                      <button onClick={() => handleDelete(lesson.id)} className="btn btn-xs btn-outline btn-error">
+                      <button onClick={() => handleDelete(lesson._id)} className="btn btn-xs btn-outline btn-error">
                         <FaTrash />
                       </button>
                     </div>
