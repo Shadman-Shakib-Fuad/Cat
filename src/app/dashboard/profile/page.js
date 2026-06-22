@@ -1,39 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { sampleLessons } from "@/lib/mockData";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/AuthProvider";
 import LessonCard from "@/components/shared/LessonCard";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { FaStar } from "react-icons/fa";
 
-const mockUser = {
-  name: "Rafiul Islam",
-  email: "rafiul@example.com",
-  photoURL: "https://i.pravatar.cc/150?img=12",
-  isPremium: false,
-  lessonsCreated: 4,
-  lessonsSaved: 7,
-};
-
 const ProfilePage = () => {
-  const [user, setUser] = useState(mockUser);
+  const { user, isPremium, updateUser } = useAuth();
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(user.name);
-  const [photo, setPhoto] = useState(user.photoURL);
+  const [name, setName] = useState(user?.name || "");
+  const [photo, setPhoto] = useState(user?.photoURL || "");
+  const [saving, setSaving] = useState(false);
 
-  const publicLessons = sampleLessons.filter(
-    (l) => l.creator.id === "u1" && l.visibility === "Public"
-  );
+  useEffect(() => {
+    apiFetch("/api/lessons/my-lessons")
+      .then((data) => setLessons(data.filter((l) => l.visibility === "Public")))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       toast.error("Name cannot be empty");
       return;
     }
-    setUser((prev) => ({ ...prev, name, photoURL: photo }));
-    setEditing(false);
-    toast.success("Profile updated");
+    setSaving(true);
+    try {
+      await apiFetch(`/api/users/${user.id}/profile`, {
+        method: "PATCH",
+        body: JSON.stringify({ name, photoURL: photo }),
+      });
+      updateUser({ ...user, name, photoURL: photo });
+      setEditing(false);
+      toast.success("Profile updated");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div>
@@ -41,20 +53,23 @@ const ProfilePage = () => {
 
       <div className="card bg-base-100 shadow-sm border border-base-300 p-8 max-w-xl mb-10">
         <div className="flex items-center gap-6 mb-6">
-          <img src={user.photoURL} alt={user.name} className="w-20 h-20 rounded-full ring ring-primary ring-offset-2" />
+          <img
+            src={user?.photoURL || "https://i.pravatar.cc/150?img=12"}
+            alt={user?.name}
+            className="w-20 h-20 rounded-full ring ring-primary ring-offset-2"
+          />
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold">{user.name}</h2>
-              {user.isPremium && (
+              <h2 className="text-xl font-bold">{user?.name}</h2>
+              {isPremium && (
                 <span className="badge badge-warning gap-1 font-bold">
                   <FaStar size={10} /> Premium
                 </span>
               )}
             </div>
-            <p className="text-base-content/60 text-sm">{user.email}</p>
+            <p className="text-base-content/60 text-sm">{user?.email}</p>
             <div className="flex gap-4 mt-2 text-sm text-base-content/70">
-              <span>{user.lessonsCreated} lessons</span>
-              <span>{user.lessonsSaved} saved</span>
+              <span>{lessons.length} public lessons</span>
             </div>
           </div>
         </div>
@@ -70,7 +85,9 @@ const ProfilePage = () => {
               <input type="text" className="input input-bordered w-full" value={photo} onChange={(e) => setPhoto(e.target.value)} />
             </div>
             <div className="flex gap-3">
-              <button onClick={handleSave} className="btn btn-primary">Save Changes</button>
+              <button onClick={handleSave} className="btn btn-primary" disabled={saving}>
+                {saving ? <span className="loading loading-spinner loading-sm"></span> : "Save Changes"}
+              </button>
               <button onClick={() => setEditing(false)} className="btn btn-ghost">Cancel</button>
             </div>
           </div>
@@ -82,11 +99,15 @@ const ProfilePage = () => {
       </div>
 
       <h2 className="text-xl font-bold mb-6">My Public Lessons</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {publicLessons.map((lesson) => (
-          <LessonCard key={lesson.id} lesson={lesson} />
-        ))}
-      </div>
+      {lessons.length === 0 ? (
+        <p className="text-base-content/60">No public lessons yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {lessons.map((lesson) => (
+            <LessonCard key={lesson._id} lesson={lesson} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
