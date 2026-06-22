@@ -1,32 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-
-const initialUsers = [
-  { id: "u1", name: "Rafiul Islam", email: "rafiul@example.com", role: "user", lessons: 18 },
-  { id: "u2", name: "Nusrat Jahan", email: "nusrat@example.com", role: "user", lessons: 15 },
-  { id: "u3", name: "Tanvir Ahmed", email: "tanvir@example.com", role: "admin", lessons: 12 },
-  { id: "u4", name: "Sadia Rahman", email: "sadia@example.com", role: "user", lessons: 9 },
-];
+import { apiFetch } from "@/lib/api";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 const ManageUsersPage = () => {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleRoleToggle = (id) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id ? { ...u, role: u.role === "admin" ? "user" : "admin" } : u
-      )
-    );
-    toast.success("User role updated");
+  useEffect(() => {
+    apiFetch("/api/users")
+      .then(setUsers)
+      .catch(() => toast.error("Failed to load users"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleRoleToggle = async (user) => {
+    const newRole = user.role === "admin" ? "user" : "admin";
+    try {
+      await apiFetch(`/api/users/${user._id}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role: newRole }),
+      });
+      setUsers((prev) => prev.map((u) => u._id === user._id ? { ...u, role: newRole } : u));
+      toast.success("User role updated");
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!confirm("Delete this user account?")) return;
-    setUsers((prev) => prev.filter((u) => u.id !== id));
-    toast.success("User deleted");
+    try {
+      await apiFetch(`/api/users/${id}`, { method: "DELETE" });
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+      toast.success("User deleted");
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div>
@@ -40,33 +55,25 @@ const ManageUsersPage = () => {
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
-              <th>Lessons</th>
+              <th>Premium</th>
+              <th>Joined</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-t border-base-300">
+              <tr key={u._id} className="border-t border-base-300">
                 <td className="font-medium">{u.name}</td>
                 <td className="text-sm text-base-content/60">{u.email}</td>
-                <td>
-                  <span className={`badge ${u.role === "admin" ? "badge-secondary" : "badge-ghost"}`}>
-                    {u.role}
-                  </span>
-                </td>
-                <td>{u.lessons}</td>
+                <td><span className={`badge ${u.role === "admin" ? "badge-secondary" : "badge-ghost"}`}>{u.role}</span></td>
+                <td><span className={`badge ${u.isPremium ? "badge-warning" : "badge-ghost"}`}>{u.isPremium ? "Premium" : "Free"}</span></td>
+                <td className="text-sm text-base-content/60">{new Date(u.createdAt).toLocaleDateString()}</td>
                 <td>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleRoleToggle(u.id)}
-                      className="btn btn-xs btn-outline btn-primary"
-                    >
+                    <button onClick={() => handleRoleToggle(u)} className="btn btn-xs btn-outline btn-primary">
                       {u.role === "admin" ? "Demote" : "Make Admin"}
                     </button>
-                    <button
-                      onClick={() => handleDelete(u.id)}
-                      className="btn btn-xs btn-outline btn-error"
-                    >
+                    <button onClick={() => handleDelete(u._id)} className="btn btn-xs btn-outline btn-error">
                       Delete
                     </button>
                   </div>
