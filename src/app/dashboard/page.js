@@ -1,25 +1,47 @@
-import { FaBookOpen, FaBookmark, FaStar, FaPlus } from "react-icons/fa";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-
-const stats = [
-  { label: "Lessons Created", value: 4, icon: <FaBookOpen />, color: "bg-primary/10 text-primary" },
-  { label: "Saved Favorites", value: 7, icon: <FaBookmark />, color: "bg-secondary/10 text-secondary" },
-  { label: "Total Likes Received", value: 128, icon: <FaStar />, color: "bg-accent/10 text-accent" },
-];
-
-const recentLessons = [
-  { id: "1", title: "Failure is Just Feedback", category: "Career", createdAt: "2025-05-12" },
-  { id: "3", title: "Small Habits Build Big Lives", category: "Personal Growth", createdAt: "2025-04-21" },
-  { id: "6", title: "Boundaries Are Not Selfish", category: "Relationships", createdAt: "2025-05-29" },
-];
+import { FaBookOpen, FaBookmark, FaStar, FaPlus } from "react-icons/fa";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/AuthProvider";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 const DashboardPage = () => {
+  const { user } = useAuth();
+  const [lessons, setLessons] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch("/api/lessons/my-lessons"),
+      apiFetch("/api/favorites"),
+    ])
+      .then(([myLessons, myFavorites]) => {
+        setLessons(myLessons);
+        setFavorites(myFavorites);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalLikes = lessons.reduce((sum, l) => sum + (l.likesCount || 0), 0);
+
+  const stats = [
+    { label: "Lessons Created", value: lessons.length, icon: <FaBookOpen />, color: "bg-primary/10 text-primary" },
+    { label: "Saved Favorites", value: favorites.length, icon: <FaBookmark />, color: "bg-secondary/10 text-secondary" },
+    { label: "Total Likes Received", value: totalLikes, icon: <FaStar />, color: "bg-accent/10 text-accent" },
+  ];
+
+  if (loading) return <LoadingSpinner />;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-extrabold">Welcome back 👋</h1>
-          <p className="text-base-content/60 text-sm">Here's what's happening with your lessons.</p>
+          <h1 className="text-2xl font-extrabold">Welcome back, {user?.name} 👋</h1>
+          <p className="text-base-content/60 text-sm">Here is what is happening with your lessons.</p>
         </div>
         <Link href="/dashboard/add-lesson" className="btn btn-primary gap-2">
           <FaPlus /> Add Lesson
@@ -43,32 +65,34 @@ const DashboardPage = () => {
       <div className="card bg-base-100 shadow-sm">
         <div className="card-body">
           <h2 className="card-title text-base">Recently Added Lessons</h2>
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th>Created</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentLessons.map((lesson) => (
-                  <tr key={lesson.id}>
-                    <td className="font-medium">{lesson.title}</td>
-                    <td><span className="badge badge-outline badge-primary">{lesson.category}</span></td>
-                    <td className="text-sm text-base-content/60">{lesson.createdAt}</td>
-                    <td>
-                      <Link href={`/lessons/${lesson.id}`} className="btn btn-xs btn-outline">
-                        View
-                      </Link>
-                    </td>
+          {lessons.length === 0 ? (
+            <p className="text-sm text-base-content/60">No lessons yet. Add your first one!</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Created</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {lessons.slice(0, 5).map((lesson) => (
+                    <tr key={lesson._id}>
+                      <td className="font-medium">{lesson.title}</td>
+                      <td><span className="badge badge-outline badge-primary">{lesson.category}</span></td>
+                      <td className="text-sm text-base-content/60">{new Date(lesson.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <Link href={`/lessons/${lesson._id}`} className="btn btn-xs btn-outline">View</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
