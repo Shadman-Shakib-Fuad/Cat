@@ -3,11 +3,22 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FaBookOpen, FaBars } from "react-icons/fa";
+import { FaStar } from "react-icons/fa6";
+import { useAuth } from "@/lib/AuthProvider";
+import { signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const user = null;
-  const isPremium = false;
+  const { user, isPremium } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Logged out successfully");
+    router.push("/");
+  };
 
   const navLinks = (
     <>
@@ -67,17 +78,23 @@ const Navbar = () => {
           <div className="dropdown dropdown-end">
             <button tabIndex={0} className="btn btn-ghost btn-circle avatar">
               <div className="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img src={user?.photoURL || "https://i.pravatar.cc/150?img=12"} alt="avatar" />
+                <img
+                  src={user?.image || "https://i.pravatar.cc/150?img=12"}
+                  alt="avatar"
+                />
               </div>
             </button>
             <ul
               tabIndex={0}
               className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
             >
-              <li className="px-3 py-1 font-semibold">{user?.name}</li>
+              <li className="px-3 py-1 font-semibold flex items-center gap-2">
+                {user?.name}
+                {isPremium && <FaStar className="text-warning" size={12} />}
+              </li>
               <li><Link href="/dashboard/profile">Profile</Link></li>
               <li><Link href="/dashboard">Dashboard</Link></li>
-              <li><button>Logout</button></li>
+              <li><button onClick={handleLogout}>Logout</button></li>
             </ul>
           </div>
         )}
