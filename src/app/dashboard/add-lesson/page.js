@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/AuthProvider";
+import { useRouter } from "next/navigation";
 
 const CATEGORIES = ["Personal Growth", "Career", "Relationships", "Mindset", "Mistakes Learned"];
 const EMOTIONAL_TONES = ["Motivational", "Sad", "Realization", "Gratitude"];
 
 const AddLessonPage = () => {
   const [loading, setLoading] = useState(false);
-  const isPremium = false;
+  const { isPremium } = useAuth();
+  const router = useRouter();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
 
@@ -19,8 +23,8 @@ const AddLessonPage = () => {
       description: form.description.value,
       category: form.category.value,
       emotionalTone: form.emotionalTone.value,
-      accessLevel: isPremium ? form.accessLevel.value : "Free",
       visibility: form.visibility.value,
+      accessLevel: isPremium ? form.accessLevel.value : "Free",
       image: form.image.value,
     };
 
@@ -30,19 +34,24 @@ const AddLessonPage = () => {
     }
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await apiFetch("/api/lessons", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      toast.success("Lesson created successfully!");
+      router.push("/dashboard/my-lessons");
+    } catch (err) {
+      toast.error(err.message || "Failed to create lesson");
+    } finally {
       setLoading(false);
-      toast.success("Lesson submitted! (DB not connected yet)");
-      form.reset();
-    }, 800);
+    }
   };
 
   return (
     <div className="max-w-2xl">
       <h1 className="text-2xl font-extrabold mb-2">Add New Lesson</h1>
-      <p className="text-base-content/60 text-sm mb-8">
-        Share a life lesson with the community.
-      </p>
+      <p className="text-base-content/60 text-sm mb-8">Share a life lesson with the community.</p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="form-control">
@@ -62,7 +71,6 @@ const AddLessonPage = () => {
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
-
           <div className="form-control">
             <label className="label"><span className="label-text font-medium">Emotional Tone</span></label>
             <select name="emotionalTone" className="select select-bordered w-full">
@@ -79,15 +87,10 @@ const AddLessonPage = () => {
               <option value="Private">Private</option>
             </select>
           </div>
-
           <div className="form-control">
             <label className="label"><span className="label-text font-medium">Access Level</span></label>
-            <div className="tooltip tooltip-bottom w-full" data-tip={!isPremium ? "Upgrade to Premium to create paid lessons" : ""}>
-              <select
-                name="accessLevel"
-                className="select select-bordered w-full"
-                disabled={!isPremium}
-              >
+            <div className="tooltip w-full" data-tip={!isPremium ? "Upgrade to Premium to create paid lessons" : ""}>
+              <select name="accessLevel" className="select select-bordered w-full" disabled={!isPremium}>
                 <option value="Free">Free</option>
                 {isPremium && <option value="Premium">Premium</option>}
               </select>
