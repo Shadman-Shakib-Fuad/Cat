@@ -1,20 +1,45 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { FaUsers, FaBookOpen, FaFlag, FaFire } from "react-icons/fa";
 
-const stats = [
-  { label: "Total Users", value: 142, icon: <FaUsers />, color: "bg-primary/10 text-primary" },
-  { label: "Public Lessons", value: 89, icon: <FaBookOpen />, color: "bg-accent/10 text-accent" },
-  { label: "Reported Lessons", value: 5, icon: <FaFlag />, color: "bg-error/10 text-error" },
-  { label: "Today's New Lessons", value: 12, icon: <FaFire />, color: "bg-warning/10 text-warning" },
-];
-
-const topContributors = [
-  { name: "Rafiul Islam", email: "rafiul@example.com", lessons: 18 },
-  { name: "Nusrat Jahan", email: "nusrat@example.com", lessons: 15 },
-  { name: "Tanvir Ahmed", email: "tanvir@example.com", lessons: 12 },
-  { name: "Sadia Rahman", email: "sadia@example.com", lessons: 9 },
-];
-
 const AdminDashboardPage = () => {
+  const [users, setUsers] = useState([]);
+  const [lessons, setLessons] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch("/api/users"),
+      apiFetch("/api/lessons/admin/all"),
+      apiFetch("/api/reports"),
+    ])
+      .then(([u, l, r]) => {
+        setUsers(u);
+        setLessons(l);
+        setReports(r);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const today = new Date().toDateString();
+  const todayLessons = lessons.filter(
+    (l) => new Date(l.createdAt).toDateString() === today
+  ).length;
+
+  const stats = [
+    { label: "Total Users", value: users.length, icon: <FaUsers />, color: "bg-primary/10 text-primary" },
+    { label: "Public Lessons", value: lessons.filter((l) => l.visibility === "Public").length, icon: <FaBookOpen />, color: "bg-accent/10 text-accent" },
+    { label: "Reported Lessons", value: [...new Set(reports.map((r) => r.lessonId?._id))].length, icon: <FaFlag />, color: "bg-error/10 text-error" },
+    { label: "Today's New Lessons", value: todayLessons, icon: <FaFire />, color: "bg-warning/10 text-warning" },
+  ];
+
+  if (loading) return <LoadingSpinner />;
+
   return (
     <div>
       <h1 className="text-2xl font-extrabold mb-2">Admin Overview</h1>
@@ -36,22 +61,24 @@ const AdminDashboardPage = () => {
 
       <div className="card bg-base-100 shadow-sm border border-base-300">
         <div className="card-body">
-          <h2 className="card-title text-base mb-4">Most Active Contributors</h2>
+          <h2 className="card-title text-base mb-4">Recent Users</h2>
           <div className="overflow-x-auto">
             <table className="table">
               <thead>
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Lessons Created</th>
+                  <th>Role</th>
+                  <th>Joined</th>
                 </tr>
               </thead>
               <tbody>
-                {topContributors.map((u) => (
-                  <tr key={u.email} className="border-t border-base-300">
+                {users.slice(0, 5).map((u) => (
+                  <tr key={u._id} className="border-t border-base-300">
                     <td className="font-medium">{u.name}</td>
                     <td className="text-sm text-base-content/60">{u.email}</td>
-                    <td><span className="badge badge-primary">{u.lessons}</span></td>
+                    <td><span className={`badge ${u.role === "admin" ? "badge-secondary" : "badge-ghost"}`}>{u.role}</span></td>
+                    <td className="text-sm text-base-content/60">{new Date(u.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
