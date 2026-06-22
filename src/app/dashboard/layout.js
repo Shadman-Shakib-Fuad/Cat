@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FaHome,
-  FaPlus,
-  FaList,
-  FaBookmark,
-  FaUser,
-  FaCrown,
-} from "react-icons/fa";
+import { FaHome, FaPlus, FaList, FaBookmark, FaUser, FaCrown } from "react-icons/fa";
 import { MdAdminPanelSettings, MdPeople, MdReport } from "react-icons/md";
 
 const userLinks = [
@@ -31,8 +24,7 @@ const adminLinks = [
 
 const DashboardLayout = ({ children }) => {
   const pathname = usePathname();
-  const isAdmin = false;
-
+  const isAdmin = pathname.startsWith("/dashboard/admin");
   const links = isAdmin ? adminLinks : userLinks;
 
   return (
@@ -48,11 +40,7 @@ const DashboardLayout = ({ children }) => {
             <li key={link.href}>
               <Link
                 href={link.href}
-                className={
-                  pathname === link.href
-                    ? "bg-primary text-primary-content font-semibold"
-                    : ""
-                }
+                className={pathname === link.href ? "bg-primary text-primary-content font-semibold" : ""}
               >
                 {link.icon}
                 {link.label}
@@ -61,7 +49,6 @@ const DashboardLayout = ({ children }) => {
           ))}
         </ul>
       </aside>
-
       <main className="flex-1 p-6 lg:p-10">{children}</main>
     </div>
   );
