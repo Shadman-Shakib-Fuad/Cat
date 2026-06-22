@@ -1,51 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { getLessonById } from "@/lib/mockData";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/AuthProvider";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 const CATEGORIES = ["Personal Growth", "Career", "Relationships", "Mindset", "Mistakes Learned"];
 const EMOTIONAL_TONES = ["Motivational", "Sad", "Realization", "Gratitude"];
 
-const UpdateLessonPage = ({ params }) => {
-  const lesson = getLessonById(params.id);
-  const isPremium = false;
-
-  const [loading, setLoading] = useState(false);
+const UpdateLessonPage = () => {
+  const { id } = useParams();
+  const router = useRouter();
+  const { isPremium } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    title: lesson?.title || "",
-    description: lesson?.fullDescription || "",
-    category: lesson?.category || CATEGORIES[0],
-    emotionalTone: lesson?.emotionalTone || EMOTIONAL_TONES[0],
-    visibility: lesson?.visibility || "Public",
-    accessLevel: lesson?.accessLevel || "Free",
-    image: lesson?.image || "",
+    title: "",
+    description: "",
+    category: CATEGORIES[0],
+    emotionalTone: EMOTIONAL_TONES[0],
+    visibility: "Public",
+    accessLevel: "Free",
+    image: "",
   });
 
-  if (!lesson) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-lg font-medium text-base-content/60">Lesson not found.</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    apiFetch(`/api/lessons/${id}`)
+      .then((lesson) => {
+        setFormData({
+          title: lesson.title || "",
+          description: lesson.description || "",
+          category: lesson.category || CATEGORIES[0],
+          emotionalTone: lesson.emotionalTone || EMOTIONAL_TONES[0],
+          visibility: lesson.visibility || "Public",
+          accessLevel: lesson.accessLevel || "Free",
+          image: lesson.image || "",
+        });
+      })
+      .catch(() => toast.error("Failed to load lesson"))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.description) {
       toast.error("Title and description are required");
       return;
     }
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setSaving(true);
+    try {
+      await apiFetch(`/api/lessons/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(formData),
+      });
       toast.success("Lesson updated successfully!");
-    }, 800);
+      router.push("/dashboard/my-lessons");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-2xl">
@@ -102,8 +125,8 @@ const UpdateLessonPage = ({ params }) => {
           <input name="image" type="text" className="input input-bordered w-full" value={formData.image} onChange={handleChange} />
         </div>
 
-        <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-          {loading ? <span className="loading loading-spinner loading-sm"></span> : "Save Changes"}
+        <button type="submit" className="btn btn-primary w-full" disabled={saving}>
+          {saving ? <span className="loading loading-spinner loading-sm"></span> : "Save Changes"}
         </button>
       </form>
     </div>
