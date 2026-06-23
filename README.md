@@ -12,19 +12,27 @@ People often learn valuable lessons but forget them over time. This platform hel
 
 ## Key Features
 
-- User authentication with email/password and Google login (via Better Auth)
-- Free and Premium subscription tiers with Stripe payment integration
+- User authentication with email/password and Google login (custom JWT)
+- Free and Premium subscription tiers with Stripe one-time payment integration
 - Create, edit, delete, and manage personal life lessons
-- Public lesson browsing with search, filter by category/tone, and sort
+- Public lesson browsing with search, filter by category/emotional tone, and sort
+- Pagination on public lessons page
 - Like, save to favorites, comment, and report lessons
+- Premium lesson lock/blur for free users
 - Admin dashboard for managing users, lessons, and reports
-- Featured lessons, top contributors, and most saved lessons on the home page
+- Featured lessons controlled from admin dashboard
+- Top contributors and most saved lessons on home page
+- Dark/light theme toggle
+- Framer Motion scroll animations
+- Estimated reading time auto-calculation
+- Social sharing (Facebook, X, LinkedIn)
 - Fully responsive design for mobile, tablet, and desktop
-- Dark/light theme toggle (optional)
-- Framer Motion animations
+- Weekly activity chart on user dashboard
+- Platform growth chart on admin dashboard
 
 ## NPM Packages Used
 
+### Client
 - next
 - react
 - react-dom
@@ -34,13 +42,33 @@ People often learn valuable lessons but forget them over time. This platform hel
 - swiper
 - react-icons
 - react-toastify
-- better-auth
+- recharts
+- @react-oauth/google
+
+### Server
+- express
 - mongoose
+- dotenv
+- cors
+- bcryptjs
+- jsonwebtoken
 - stripe
-- react-share
+- google-auth-library
+- nodemon
 
-## Project Structure
+## Environment Variables
 
-- `src/app` — Next.js App Router pages
-- `src/components` — Reusable UI components
-- `src/lib` — Utility functions and mock data
+### Client (.env.local)
+- NEXT_PUBLIC_API_URL
+- NEXT_PUBLIC_GOOGLE_CLIENT_ID
+- NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+### Server (.env)
+- PORT
+- MONGODB_URI
+- BETTER_AUTH_SECRET
+- CLIENT_URL
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
