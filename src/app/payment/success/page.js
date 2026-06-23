@@ -1,18 +1,36 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaCheckCircle, FaStar } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthProvider";
+import { apiFetch } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 const PaymentSuccessPage = () => {
   const { user, updateUser } = useAuth();
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
+  const [verifying, setVerifying] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      updateUser({ ...user, isPremium: true });
+    if (!sessionId || !user) {
+      setVerifying(false);
+      return;
     }
-  }, []);
+
+    apiFetch(`/api/payment/verify-session?session_id=${sessionId}`)
+      .then((data) => {
+        if (data.success) {
+          updateUser({ ...user, isPremium: true });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setVerifying(false));
+  }, [sessionId, user]);
+
+  if (verifying) return <LoadingSpinner fullScreen />;
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-6">
