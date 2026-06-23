@@ -1,38 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { FaBookOpen, FaBars, FaMoon, FaSun } from "react-icons/fa";
+import { useState } from "react";
+import { FaBookOpen, FaBars } from "react-icons/fa";
 import { FaStar } from "react-icons/fa6";
 import { useAuth } from "@/lib/AuthProvider";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const { user, isPremium, logout } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    const stored = localStorage.getItem("isDark") === "true";
-    setIsDark(stored);
-    if (stored) {
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.setAttribute("data-theme", "lifelessons");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-    localStorage.setItem("isDark", String(newIsDark));
-    document.documentElement.setAttribute(
-      "data-theme",
-      newIsDark ? "dark" : "lifelessons"
-    );
-  };
 
   const handleLogout = () => {
     logout();
@@ -89,13 +69,7 @@ const Navbar = () => {
       </div>
 
       <div className="navbar-end gap-2">
-        <button
-          onClick={toggleTheme}
-          className="btn btn-ghost btn-circle"
-          title="Toggle theme"
-        >
-          {isDark ? <FaSun size={18} /> : <FaMoon size={18} />}
-        </button>
+        <ThemeToggle />
 
         {!user ? (
           <>
