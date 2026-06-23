@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaHome, FaPlus, FaList, FaBookmark, FaUser, FaCrown } from "react-icons/fa";
 import { MdAdminPanelSettings, MdPeople, MdReport } from "react-icons/md";
+import PrivateRoute from "@/components/shared/PrivateRoute";
 
 const userLinks = [
   { href: "/dashboard", label: "Overview", icon: <FaHome /> },
@@ -24,33 +25,35 @@ const adminLinks = [
 
 const DashboardLayout = ({ children }) => {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/dashboard/admin");
-  const links = isAdmin ? adminLinks : userLinks;
+  const isAdminRoute = pathname.startsWith("/dashboard/admin");
+  const links = isAdminRoute ? adminLinks : userLinks;
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-base-200">
-      <aside className="w-full lg:w-64 bg-base-100 border-r border-base-300 lg:min-h-screen">
-        <div className="p-5 border-b border-base-300">
-          <h2 className="font-extrabold text-lg text-primary">
-            {isAdmin ? "Admin Panel" : "My Dashboard"}
-          </h2>
-        </div>
-        <ul className="menu p-3 gap-1">
-          {links.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className={pathname === link.href ? "bg-primary text-primary-content font-semibold" : ""}
-              >
-                {link.icon}
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </aside>
-      <main className="flex-1 p-6 lg:p-10">{children}</main>
-    </div>
+    <PrivateRoute adminOnly={isAdminRoute}>
+      <div className="min-h-screen flex flex-col lg:flex-row bg-base-200">
+        <aside className="w-full lg:w-64 bg-base-100 border-r border-base-300 lg:min-h-screen">
+          <div className="p-5 border-b border-base-300">
+            <h2 className="font-extrabold text-lg text-primary">
+              {isAdminRoute ? "Admin Panel" : "My Dashboard"}
+            </h2>
+          </div>
+          <ul className="menu p-3 gap-1">
+            {links.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={pathname === link.href ? "bg-primary text-primary-content font-semibold" : ""}
+                >
+                  {link.icon}
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+        <main className="flex-1 p-6 lg:p-10">{children}</main>
+      </div>
+    </PrivateRoute>
   );
 };
 
