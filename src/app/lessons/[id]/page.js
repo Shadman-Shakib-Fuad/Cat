@@ -10,7 +10,9 @@ import AuthorCard from "@/components/lessons/AuthorCard";
 import StatsBar from "@/components/lessons/StatsBar";
 import InteractionButtons from "@/components/lessons/InteractionButtons";
 import CommentSection from "@/components/lessons/CommentSection";
+import SimilarLessons from "@/components/lessons/SimilarLessons";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import Link from "next/link";
 
 const LessonDetailsPage = () => {
   const { id } = useParams();
@@ -21,6 +23,10 @@ const LessonDetailsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
     Promise.all([
       apiFetch(`/api/lessons/${id}`),
       apiFetch(`/api/comments/${id}`),
@@ -29,9 +35,9 @@ const LessonDetailsPage = () => {
         setLesson(lessonData);
         setComments(commentData);
       })
-      .catch(() => router.push("/"))
+      .catch(() => router.push("/public-lessons"))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, user]);
 
   if (loading) return <LoadingSpinner fullScreen />;
   if (!lesson) return null;
@@ -41,9 +47,14 @@ const LessonDetailsPage = () => {
   if (isLocked) {
     return (
       <div className="section-container py-20 text-center max-w-xl">
+        <div className="text-6xl mb-6">🔒</div>
         <h2 className="text-2xl font-extrabold mb-4">Premium Lesson</h2>
-        <p className="text-base-content/70 mb-6">Upgrade to Premium to unlock this lesson.</p>
-        <a href="/dashboard/pricing" className="btn btn-primary">Upgrade to Premium</a>
+        <p className="text-base-content/70 mb-6">
+          Upgrade to Premium to unlock this and all Premium lessons.
+        </p>
+        <Link href="/dashboard/pricing" className="btn btn-primary btn-lg">
+          Upgrade to Premium
+        </Link>
       </div>
     );
   }
@@ -67,6 +78,7 @@ const LessonDetailsPage = () => {
         lessonId={id}
         user={user}
       />
+      <SimilarLessons currentLesson={lesson} />
     </div>
   );
 };
