@@ -1,12 +1,10 @@
 const LessonInfo = ({ lesson }) => {
   return (
     <div>
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 flex-wrap">
         <span className="badge badge-primary badge-outline">{lesson.category}</span>
         <span className="badge badge-secondary badge-outline">{lesson.emotionalTone}</span>
-        <span
-          className={`badge ${lesson.accessLevel === "Premium" ? "badge-secondary" : "badge-accent"}`}
-        >
+        <span className={`badge ${lesson.accessLevel === "Premium" ? "badge-secondary" : "badge-accent"}`}>
           {lesson.accessLevel}
         </span>
       </div>
@@ -22,7 +20,7 @@ const LessonInfo = ({ lesson }) => {
       )}
 
       <p className="text-base leading-relaxed text-base-content/80 whitespace-pre-line">
-        {lesson.fullDescription}
+        {lesson.description || lesson.fullDescription}
       </p>
     </div>
   );
