@@ -80,7 +80,6 @@ const RegisterForm = () => {
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
           onError={() => toast.error("Google login failed")}
-          useOneTap
           shape="rectangular"
           size="large"
           width="400"
