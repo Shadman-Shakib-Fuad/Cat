@@ -1,11 +1,14 @@
-import { getEstimatedReadingTime } from "@/lib/mockData";
-
 const LessonMetadata = ({ lesson }) => {
-  const readingTime = getEstimatedReadingTime(lesson.fullDescription);
+  const getReadingTime = (text = "") => {
+    const words = text.trim().split(/\s+/).length;
+    return Math.max(1, Math.ceil(words / 200));
+  };
+
+  const readingTime = getReadingTime(lesson.description || lesson.fullDescription || "");
 
   const metaItems = [
-    { label: "Created", value: lesson.createdAt },
-    { label: "Last Updated", value: lesson.lastUpdated },
+    { label: "Created", value: new Date(lesson.createdAt).toLocaleDateString() },
+    { label: "Last Updated", value: new Date(lesson.lastUpdated || lesson.updatedAt).toLocaleDateString() },
     { label: "Visibility", value: lesson.visibility },
     { label: "Reading Time", value: `${readingTime} min read` },
   ];
