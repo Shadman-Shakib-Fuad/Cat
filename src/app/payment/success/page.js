@@ -1,7 +1,19 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
 import { FaCheckCircle, FaStar } from "react-icons/fa";
+import { useAuth } from "@/lib/AuthProvider";
 
 const PaymentSuccessPage = () => {
+  const { user, updateUser } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      updateUser({ ...user, isPremium: true });
+    }
+  }, []);
+
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-6">
       <div className="text-center max-w-md">
