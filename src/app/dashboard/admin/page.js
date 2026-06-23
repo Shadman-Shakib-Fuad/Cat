@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import AdminChart from "@/components/dashboard/AdminChart";
 import { FaUsers, FaBookOpen, FaFlag, FaFire } from "react-icons/fa";
 
 const AdminDashboardPage = () => {
@@ -45,7 +46,7 @@ const AdminDashboardPage = () => {
       <h1 className="text-2xl font-extrabold mb-2">Admin Overview</h1>
       <p className="text-base-content/60 text-sm mb-8">Platform-wide analytics at a glance.</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {stats.map((s) => (
           <div key={s.label} className="card bg-base-100 shadow-sm p-6 flex flex-row items-center gap-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${s.color}`}>
@@ -59,7 +60,9 @@ const AdminDashboardPage = () => {
         ))}
       </div>
 
-      <div className="card bg-base-100 shadow-sm border border-base-300">
+      <AdminChart lessons={lessons} users={users} />
+
+      <div className="card bg-base-100 shadow-sm border border-base-300 mt-6">
         <div className="card-body">
           <h2 className="card-title text-base mb-4">Recent Users</h2>
           <div className="overflow-x-auto">
