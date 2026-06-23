@@ -10,21 +10,28 @@ import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [theme, setTheme] = useState("lifelessons");
+  const [isDark, setIsDark] = useState(false);
   const { user, isPremium, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme") || "lifelessons";
-    setTheme(stored);
-    document.documentElement.setAttribute("data-theme", stored);
+    const stored = localStorage.getItem("isDark") === "true";
+    setIsDark(stored);
+    if (stored) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "lifelessons");
+    }
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "lifelessons" ? "dark" : "lifelessons";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    localStorage.setItem("isDark", String(newIsDark));
+    document.documentElement.setAttribute(
+      "data-theme",
+      newIsDark ? "dark" : "lifelessons"
+    );
   };
 
   const handleLogout = () => {
@@ -87,7 +94,7 @@ const Navbar = () => {
           className="btn btn-ghost btn-circle"
           title="Toggle theme"
         >
-          {theme === "dark" ? <FaSun size={18} /> : <FaMoon size={18} />}
+          {isDark ? <FaSun size={18} /> : <FaMoon size={18} />}
         </button>
 
         {!user ? (
