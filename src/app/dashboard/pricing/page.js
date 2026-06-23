@@ -1,5 +1,11 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
 import { FaCheck, FaTimes, FaStar } from "react-icons/fa";
+import { useAuth } from "@/lib/AuthProvider";
+import { apiFetch } from "@/lib/api";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const features = [
   { label: "Create life lessons", free: "Up to 5", premium: "Unlimited" },
@@ -13,14 +19,35 @@ const features = [
 ];
 
 const Cell = ({ value }) => {
-  if (value === true)
-    return <FaCheck className="text-success mx-auto" size={18} />;
-  if (value === false)
-    return <FaTimes className="text-error mx-auto" size={18} />;
+  if (value === true) return <FaCheck className="text-success mx-auto" size={18} />;
+  if (value === false) return <FaTimes className="text-error mx-auto" size={18} />;
   return <span className="font-medium text-sm">{value}</span>;
 };
 
 const PricingPage = () => {
+  const { user, isPremium } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleUpgrade = async () => {
+    if (!user) {
+      toast.info("Please log in first");
+      router.push("/login");
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await apiFetch("/api/payment/create-checkout-session", {
+        method: "POST",
+      });
+      window.location.href = data.url;
+    } catch (err) {
+      toast.error(err.message || "Payment failed to initialize");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="section-container py-16">
       <div className="text-center mb-12">
@@ -45,7 +72,9 @@ const PricingPage = () => {
             <li className="flex items-center gap-2"><FaTimes className="text-error" /> No Premium badge</li>
           </ul>
           <div className="mt-8">
-            <span className="btn btn-outline w-full pointer-events-none">Current Plan</span>
+            <span className="btn btn-outline w-full pointer-events-none">
+              {isPremium ? "Previous Plan" : "Current Plan"}
+            </span>
           </div>
         </div>
 
@@ -65,9 +94,19 @@ const PricingPage = () => {
             <li className="flex items-center gap-2"><FaCheck /> Community Premium ⭐ badge</li>
           </ul>
           <div className="mt-8">
-            <Link href="/payment/checkout" className="btn bg-white text-primary hover:bg-white/90 border-none w-full font-bold">
-              Upgrade to Premium
-            </Link>
+            {isPremium ? (
+              <span className="btn bg-white text-primary border-none w-full font-bold pointer-events-none">
+                ⭐ You are Premium!
+              </span>
+            ) : (
+              <button
+                onClick={handleUpgrade}
+                className="btn bg-white text-primary hover:bg-white/90 border-none w-full font-bold"
+                disabled={loading}
+              >
+                {loading ? <span className="loading loading-spinner loading-sm"></span> : "Upgrade to Premium"}
+              </button>
+            )}
           </div>
         </div>
       </div>
