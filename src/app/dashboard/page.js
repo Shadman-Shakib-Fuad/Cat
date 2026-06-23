@@ -6,6 +6,7 @@ import { FaBookOpen, FaBookmark, FaStar, FaPlus } from "react-icons/fa";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/AuthProvider";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import ActivityChart from "@/components/dashboard/ActivityChart";
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -48,7 +49,7 @@ const DashboardPage = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
         {stats.map((s) => (
           <div key={s.label} className="card bg-base-100 shadow-sm p-6 flex flex-row items-center gap-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${s.color}`}>
@@ -62,7 +63,9 @@ const DashboardPage = () => {
         ))}
       </div>
 
-      <div className="card bg-base-100 shadow-sm">
+      <ActivityChart lessons={lessons} />
+
+      <div className="card bg-base-100 shadow-sm mt-6">
         <div className="card-body">
           <h2 className="card-title text-base">Recently Added Lessons</h2>
           {lessons.length === 0 ? (
