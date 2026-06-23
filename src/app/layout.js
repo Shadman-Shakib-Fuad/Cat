@@ -5,6 +5,7 @@ import Footer from "@/components/shared/Footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "@/lib/AuthProvider";
+import GoogleAuthProvider from "@/components/auth/GoogleAuthProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -26,12 +27,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="lifelessons">
       <body className={`${poppins.variable} ${inter.variable} antialiased`}>
-        <AuthProvider>
-          <Navbar />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
-          <ToastContainer position="top-center" autoClose={3000} />
-        </AuthProvider>
+        <GoogleAuthProvider>
+          <AuthProvider>
+            <Navbar />
+            <main className="min-h-screen">{children}</main>
+            <Footer />
+            <ToastContainer position="top-center" autoClose={3000} />
+          </AuthProvider>
+        </GoogleAuthProvider>
       </body>
     </html>
   );

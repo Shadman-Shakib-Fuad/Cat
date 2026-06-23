@@ -3,10 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { registerUser } from "@/lib/auth-client";
 import { useAuth } from "@/lib/AuthProvider";
+import { GoogleLogin } from "@react-oauth/google";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -52,11 +55,38 @@ const RegisterForm = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      updateUser(data.user);
+      toast.success("Logged in with Google!");
+      router.push("/dashboard");
+    } catch (err) {
+      toast.error(err.message || "Google login failed");
+    }
+  };
+
   return (
     <div>
-      <button className="btn btn-outline w-full mb-6" type="button" onClick={() => toast.info("Google login coming soon")}>
-        <FaGoogle className="text-secondary" /> Continue with Google
-      </button>
+      <div className="flex justify-center mb-6">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => toast.error("Google login failed")}
+          useOneTap
+          shape="rectangular"
+          size="large"
+          width="400"
+          text="continue_with"
+        />
+      </div>
 
       <div className="divider text-base-content/40 text-sm">OR</div>
 
