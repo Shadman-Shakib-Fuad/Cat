@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { signIn } from "@/lib/auth-client";
+import { loginUser } from "@/lib/auth-client";
+import { useAuth } from "@/lib/AuthProvider";
 import { GoogleLogin } from "@react-oauth/google";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -14,6 +15,7 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { updateUser } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,17 +30,8 @@ const LoginForm = () => {
 
     setLoading(true);
     try {
-      const { error } = await signIn.email({
-        email,
-        password,
-        callbackURL: "/dashboard",
-      });
-
-      if (error) {
-        toast.error(error.message || "Login failed");
-        return;
-      }
-
+      const data = await loginUser({ email, password });
+      updateUser(data.user);
       toast.success("Logged in successfully!");
       router.push("/dashboard");
     } catch (err) {
@@ -50,18 +43,20 @@ const LoginForm = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/sign-in/google`, {
+      const res = await fetch(`${API_URL}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ idToken: credentialResponse.credential }),
+        body: JSON.stringify({ credential: credentialResponse.credential }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      updateUser(data.user);
       toast.success("Logged in with Google!");
       router.push("/dashboard");
-    } catch {
-      toast.error("Google login failed");
+    } catch (err) {
+      toast.error(err.message || "Google login failed");
     }
   };
 
