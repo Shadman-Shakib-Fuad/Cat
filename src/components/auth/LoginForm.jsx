@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { loginUser } from "@/lib/auth-client";
-import { useAuth } from "@/lib/AuthProvider";
+import { signIn } from "@/lib/auth-client";
 import { GoogleLogin } from "@react-oauth/google";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -15,7 +14,6 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { updateUser } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,14 +22,23 @@ const LoginForm = () => {
     const password = form.password.value;
 
     if (!email || !password) {
-      toast.error("Please fill in both email and password");
+      toast.error("Please fill in both fields");
       return;
     }
 
     setLoading(true);
     try {
-      const data = await loginUser({ email, password });
-      updateUser(data.user);
+      const { error } = await signIn.email({
+        email,
+        password,
+        callbackURL: "/dashboard",
+      });
+
+      if (error) {
+        toast.error(error.message || "Login failed");
+        return;
+      }
+
       toast.success("Logged in successfully!");
       router.push("/dashboard");
     } catch (err) {
@@ -43,20 +50,18 @@ const LoginForm = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/google`, {
+      const res = await fetch(`${API_URL}/api/auth/sign-in/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: credentialResponse.credential }),
+        credentials: "include",
+        body: JSON.stringify({ idToken: credentialResponse.credential }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      updateUser(data.user);
       toast.success("Logged in with Google!");
       router.push("/dashboard");
-    } catch (err) {
-      toast.error(err.message || "Google login failed");
+    } catch {
+      toast.error("Google login failed");
     }
   };
 
@@ -66,7 +71,6 @@ const LoginForm = () => {
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
           onError={() => toast.error("Google login failed")}
-          useOneTap
           shape="rectangular"
           size="large"
           width="400"

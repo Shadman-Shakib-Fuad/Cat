@@ -1,40 +1,53 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { getStoredUser, getToken, logoutUser } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 
 const AuthContext = createContext(null);
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: session, isPending } = useSession();
+  const [dbUser, setDbUser] = useState(null);
+
+  const user = session?.user || null;
 
   useEffect(() => {
-    const stored = getStoredUser();
-    const token = getToken();
-    if (stored && token) {
-      setUser(stored);
+    if (user?.email) {
+      fetch(`${API_URL}/api/users/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: user.name,
+          email: user.email,
+          photoURL: user.image || "",
+        }),
+      })
+        .then((r) => r.json())
+        .then(setDbUser)
+        .catch(() => {});
+    } else {
+      setDbUser(null);
     }
-    setLoading(false);
-  }, []);
+  }, [user?.email]);
 
-  const updateUser = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+  const logout = async () => {
+    await signOut();
+    setDbUser(null);
   };
 
-  const logout = () => {
-    logoutUser();
-    setUser(null);
+  const updateUser = (data) => {
+    setDbUser(data);
   };
 
-  const isPremium = user?.isPremium || false;
-  const isAdmin = user?.role === "admin";
+  const isPremium = dbUser?.isPremium || false;
+  const isAdmin = dbUser?.role === "admin";
 
-  if (loading) return null;
+  if (isPending) return null;
 
   return (
-    <AuthContext.Provider value={{ user, isPremium, isAdmin, updateUser, logout }}>
+    <AuthContext.Provider value={{ user, dbUser, isPremium, isAdmin, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
